@@ -1,5 +1,6 @@
 from selenium import webdriver 
 import undetected_chromedriver.v2 as uc
+from selenium.webdriver.common.keys import Keys
 import chromedriver_autoinstaller
 import time
 import random
@@ -62,7 +63,7 @@ class TikTok:
                 f.write(url + '\n')
         return len(video_urls)
 
-    def crawl(self, channel_url):
+    def crawl_channel(self, channel_url):
         # Create data file
         channel = channel_url.split('@')[-1]
         self.channel_path = os.path.join(self.path, f'{channel}.txt')
@@ -72,6 +73,28 @@ class TikTok:
         while self.scroll_down():
             time.sleep(random.randint(2,3)) 
             index = self.get_url(index)
+    
+    def crawl(self, list_keywords):
+        self.driver.get('https://www.tiktok.com/foryou')
+        time.sleep(random.randint(5,7))
+        btn_close = self.driver.find_elements('xpath', '//div[@data-e2e="modal-close-inner-button"]')
+        try:
+            if btn_close:
+                btn_close[0].click()
+        except Exception as ex:
+            print(str(ex))
+        for keyword in list_keywords:
+            search = self.driver.find_element('xpath', '//input[@type="search"]')
+            search.clear()
+            search.send_keys(keyword)
+            search.send_keys(Keys.RETURN)
+            time.sleep(random.randint(3,5))
+            channels = [element.get_attribute('href') for element in self.driver.find_elements('xpath', '//a[contains(@href, "@")]')]
+            channels = list(set([url.split('/video')[0] for url in channels]))
+            for channel_url in channels:
+                self.crawl_channel(channel_url)
+            
 if __name__ == '__main__':
     bot = TikTok()
-    bot.crawl(channel_url='https://www.tiktok.com/@theanh28entertainment')
+    #bot.crawl_channel(channel_url='https://www.tiktok.com/@theanh28entertainment')
+    bot.crawl(list_keywords=['a', 'b', 'c'])
